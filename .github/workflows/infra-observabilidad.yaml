@@ -80,7 +80,9 @@ jobs:
 
       - name: Crear Bucket S3
         run: |
-          aws s3api create-bucket --bucket andesmotors-storage --region ${{ github.event.inputs.aws_region }} --create-bucket-configuration LocationConstraint=${{ github.event.inputs.aws_region }}
+          aws s3api create-bucket \
+            --bucket andesmotors-storage \
+            --region us-east-1
 
       - name: Configurar DNS Route 53
         run: |
