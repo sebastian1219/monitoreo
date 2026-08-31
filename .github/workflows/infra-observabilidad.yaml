@@ -22,7 +22,7 @@ jobs:
       - name: Deploy EC2
         run: |
           aws ec2 run-instances \
-            --image-id ami-0c55b159cbfafe1f0 \
+            --image-id ami-0b6d9d3d33ba97d99 \
             --count 1 \
             --instance-type t3.micro \
             --key-name LearnerLabKey \
