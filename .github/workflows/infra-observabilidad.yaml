@@ -101,7 +101,8 @@ jobs:
             aws s3api create-bucket --bucket andesmotors-storage --region us-east-1
           fi
 
-      - name: Configurar DNS Route 53 (si no existe)
+   
+      - name: Configurar DNS Route 53
         run: |
           HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-name --dns-name andesmotors.local --query "HostedZones[0].Id" --output text)
           if [ "$HOSTED_ZONE_ID" == "None" ]; then
@@ -110,5 +111,9 @@ jobs:
           echo "HOSTED_ZONE_ID=$HOSTED_ZONE_ID" >> $GITHUB_ENV
 
           PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
-          aws route53 change-resource-record-sets --hosted-zone-id $HOSTED_ZONE_ID --change-batch "{\"Changes\":[{\"Action\":\"UPSERT\",\"ResourceRecordSet\":{\"Name\":\"app.andesmotors.local\",\"Type\":\"A\",\"TTL\":300,\"ResourceRecords\":[{\"Value\":\"$PUBLIC_IP\"}]}}]}"
+          if [ "$PUBLIC_IP" != "None" ] && [ -n "$PUBLIC_IP" ]; then
+            aws route53 change-resource-record-sets --hosted-zone-id $HOSTED_ZONE_ID --change-batch "{\"Changes\":[{\"Action\":\"UPSERT\",\"ResourceRecordSet\":{\"Name\":\"app.andesmotors.local\",\"Type\":\"A\",\"TTL\":300,\"ResourceRecords\":[{\"Value\":\"$PUBLIC_IP\"}]}}]}"
+          else
+            echo "⚠️ La instancia aún no tiene IP pública asignada. Reintenta este paso cuando esté en estado running."
+          fi
 
