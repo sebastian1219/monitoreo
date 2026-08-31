@@ -62,7 +62,7 @@ jobs:
          aws rds create-db-subnet-group \
            --db-subnet-group-name andesmotors-subnet-group \
            --db-subnet-group-description "Subnets para RDS Andes Motors" \
-           --subnet-ids $SUBNET_ID
+           --subnet-ids subnet-aaaaaaa subnet-bbbbbbb
           DB_ID=$(aws rds create-db-instance \
             --db-instance-identifier andesmotors-db \
             --db-instance-class db.t3.micro \
