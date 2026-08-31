@@ -56,6 +56,13 @@ jobs:
             --query 'Instances[0].InstanceId' --output text)
           echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
 
+         aws rds create-db-subnet-group \
+           --db-subnet-group-name andesmotors-subnet-group \
+           --db-subnet-group-description "Subnets para RDS Andes Motors" \
+           --subnet-ids $SUBNET_ID
+
+
+
       - name: Crear Base de Datos RDS
         run: |
           DB_ID=$(aws rds create-db-instance \
