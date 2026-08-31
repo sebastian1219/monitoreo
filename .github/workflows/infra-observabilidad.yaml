@@ -66,6 +66,7 @@ jobs:
             --master-username admin \
             --master-user-password Password123! \
             --vpc-security-group-ids $SG_ID \
+            --db-subnet-group-name andesmotors-subnet-group \
             --query 'DBInstance.DBInstanceIdentifier' --output text)
           echo "DB_ID=$DB_ID" >> $GITHUB_ENV
 
