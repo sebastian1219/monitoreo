@@ -4,6 +4,7 @@ on:
     inputs:
       aws_region:
         default: us-east-1
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,6 +20,40 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ github.event.inputs.aws_region }}
 
+      - name: Create VPC and Networking
+        run: |
+          VPC_ID=$(aws ec2 create-vpc \
+            --cidr-block 10.42.0.0/16 \
+            --query 'Vpc.VpcId' --output text)
+          echo "VPC_ID=$VPC_ID" >> $GITHUB_ENV
+
+          SUBNET_ID=$(aws ec2 create-subnet \
+            --vpc-id $VPC_ID \
+            --cidr-block 10.42.1.0/24 \
+            --availability-zone us-east-1a \
+            --query 'Subnet.SubnetId' --output text)
+          echo "SUBNET_ID=$SUBNET_ID" >> $GITHUB_ENV
+
+          IGW_ID=$(aws ec2 create-internet-gateway \
+            --query 'InternetGateway.InternetGatewayId' --output text)
+          aws ec2 attach-internet-gateway --vpc-id $VPC_ID --internet-gateway-id $IGW_ID
+
+          RTB_ID=$(aws ec2 create-route-table \
+            --vpc-id $VPC_ID \
+            --query 'RouteTable.RouteTableId' --output text)
+          aws ec2 create-route --route-table-id $RTB_ID --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW_ID
+          aws ec2 associate-route-table --subnet-id $SUBNET_ID --route-table-id $RTB_ID
+
+          SG_ID=$(aws ec2 create-security-group \
+            --group-name AndesMotors-SG \
+            --description "SG para Andes Motors" \
+            --vpc-id $VPC_ID \
+            --query 'GroupId' --output text)
+          echo "SG_ID=$SG_ID" >> $GITHUB_ENV
+
+          aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0
+          aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 80 --cidr 0.0.0.0/0
+
       - name: Deploy EC2
         run: |
           aws ec2 run-instances \
@@ -26,5 +61,7 @@ jobs:
             --count 1 \
             --instance-type t3.micro \
             --key-name LearnerLabKey \
-            --security-group-ids sg-xxxx \
-            --subnet-id subnet-xxxx
+            --security-group-ids $SG_ID \
+            --subnet-id $SUBNET_ID \
+            --associate-public-ip-address \
+            --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=AndesMotors-EC2}]"
