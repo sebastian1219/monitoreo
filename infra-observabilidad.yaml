@@ -1,0 +1,30 @@
+name: Observabilidad Andes Motors
+on:
+  workflow_dispatch:
+    inputs:
+      aws_region:
+        default: us-east-1
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ github.event.inputs.aws_region }}
+
+      - name: Deploy EC2
+        run: |
+          aws ec2 run-instances \
+            --image-id ami-0c55b159cbfafe1f0 \
+            --count 1 \
+            --instance-type t3.micro \
+            --key-name LearnerLabKey \
+            --security-group-ids sg-xxxx \
+            --subnet-id subnet-xxxx
